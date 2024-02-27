@@ -1,0 +1,4 @@
+name: gdt-connector
+version: '${version}'
+main: com.projectgdt.PluginMain
+api-version: '1.20'
