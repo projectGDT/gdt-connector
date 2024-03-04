@@ -4,10 +4,13 @@ import com.google.gson.Gson;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,6 +64,8 @@ public final class PluginMain extends JavaPlugin {
             socket.on("id-invalid", idInvalid);
             socket.on("token-invalid", tokenInvalid);
 
+            socket.on("kick-online-player", kickOnlinePlayer);
+
             // try to connect
             socket.connect();
         } catch(URISyntaxException e) {
@@ -81,6 +86,26 @@ public final class PluginMain extends JavaPlugin {
         public void call(Object... objects) {
             System.err.println("Failed to enable the plugin. Please check your token in /plugins/gdt-connect/config.yml");
             socket.disconnect();
+        }
+    };
+
+    final private Emitter.Listener kickOnlinePlayer = new Emitter.Listener() {
+        @Override
+        public void call(Object... objects) {
+            JSONObject data = (JSONObject) objects[0];
+            String uuid = data.getJSONObject("profile").getString("uniqueId");
+
+            Map<String, Object> responseData = new HashMap<>();
+            Player kickedPlayer = getServer().getPlayer(uuid);
+            if (kickedPlayer == null) {
+                responseData.put("success", false);
+            }
+            else {
+                kickedPlayer.kickPlayer("");
+                responseData.put("success", true);
+            }
+            responseData.put("timestamp", new Date().getTime());
+            socket.emit("kick-online-player-response", responseData);
         }
     };
 

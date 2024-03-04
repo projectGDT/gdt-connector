@@ -19,7 +19,7 @@ public final class LogoutListener implements Listener {
 
     @EventHandler
     public void onLogout(PlayerQuitEvent event) {
-        String timestamp = String.valueOf(new Date().getTime());
+        Long timestamp = new Date().getTime();
 
         Map<String, Object> profile = new HashMap<>();
         if (plugin.getServer().getOnlineMode()) {

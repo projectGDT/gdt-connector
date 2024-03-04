@@ -19,7 +19,7 @@ public final class LoginListener implements Listener {
 
     @EventHandler
     public void onLogin(PlayerJoinEvent event) {
-        String timestamp = String.valueOf(new Date().getTime());
+        Long timestamp = new Date().getTime();
 
         Map<String, Object> profile = new HashMap<>();
         if (plugin.getServer().getOnlineMode()) {
