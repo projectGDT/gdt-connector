@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
@@ -19,15 +20,40 @@ public final class PluginMain extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
-        if (getConfig().getInt("serverId") < 0) {
-            System.err.println("Failed to enable the plugin. Please check /plugins/gdt-connect/config.yml");
-            return;
-        }
+        // register command
+        this.getCommand("setconfig").setExecutor(new PluginCommandExecutor(this));
 
+        // register listeners
         getServer().getPluginManager().registerEvents(new LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new LogoutListener(this), this);
-        connectBackend();
+
+        // if it's the first launch, save default config.yml
+        File dataFolder = getDataFolder();
+        if (!dataFolder.exists()) {
+            // create initial config.yml
+            saveDefaultConfig();
+            System.out.println("The plugin has been enabled successfully!");
+            System.out.println("Use command /setconfig to set your serverId and token, and the plugin will connect to backend automatically.");
+            System.out.println("Usage: /setconfig [serverId] [token]");
+        }
+
+        else {
+            // check data in config.yml
+            long serverId = getConfig().getLong("serverId", -1);
+            if (serverId == -1) {
+                System.err.println("Invalid or empty serverId. Use command /setconfig to set serverId.");
+                System.out.println("Usage: /setconfig [serverId] [token]");
+                return;
+            }
+            String token = getConfig().getString("token", "");
+            if (token.isEmpty()) {
+                System.err.println("Invalid or empty token. Use command /setconfig to set token.");
+                System.out.println("Usage: /setconfig [serverId] [token]");
+                return;
+            }
+            // try to connect backend
+            connectBackend(serverId, token);
+        }
     }
 
     @Override
@@ -39,12 +65,12 @@ public final class PluginMain extends JavaPlugin {
         socket = null;
     }
 
-    private void connectBackend() {
+    public void connectBackend(long serverId, String token) {
         try {
             // add auth data
             Map<String, String> auth = new HashMap<>();
-            auth.put("id", String.valueOf(getConfig().getInt("serverId")));
-            auth.put("token", getConfig().getString("token"));
+            auth.put("id", String.valueOf(serverId));
+            auth.put("token", token);
 
             // create socket with auth data
             IO.Options opts = new IO.Options();
@@ -76,7 +102,8 @@ public final class PluginMain extends JavaPlugin {
     final private Emitter.Listener idInvalid = new Emitter.Listener() {
         @Override
         public void call(Object... objects) {
-            System.err.println("Failed to enable the plugin. Please check your serverId in /plugins/gdt-connect/config.yml");
+            System.err.println("Invalid or empty serverId. Use command /setconfig to set serverId.");
+            System.out.println("Usage: /setconfig [serverId] [token]");
             socket.disconnect();
         }
     };
@@ -84,7 +111,8 @@ public final class PluginMain extends JavaPlugin {
     final private Emitter.Listener tokenInvalid = new Emitter.Listener() {
         @Override
         public void call(Object... objects) {
-            System.err.println("Failed to enable the plugin. Please check your token in /plugins/gdt-connect/config.yml");
+            System.err.println("Invalid or empty token. Use command /setconfig to set token.");
+            System.out.println("Usage: /setconfig [serverId] [token]");
             socket.disconnect();
         }
     };
@@ -112,7 +140,7 @@ public final class PluginMain extends JavaPlugin {
     final private Emitter.Listener onConnect = new Emitter.Listener() {
         @Override
         public void call(Object... objects) {
-            getLogger().info("connected");
+            System.out.println("Trying to connect to backend...");
         }
     };
 }

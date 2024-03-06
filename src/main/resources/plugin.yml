@@ -2,3 +2,8 @@ name: gdt-connector
 version: '${version}'
 main: com.projectgdt.PluginMain
 api-version: '1.20'
+
+commands:
+  setconfig:
+    description: Set serverId and token in config.yml, and try to connect to backend.
+    usage: /setconfig [serverId] [token]
